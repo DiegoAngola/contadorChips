@@ -6,7 +6,7 @@ export default function DualChipCounter() {
   const billValues = [500, 200, 100, 50, 20, 10, 5];
   const [dollarChips, setDollarChips] = useState({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
   const [bolivarChips, setBolivarChips] = useState({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
-  const [bolivarBills, setBolivarBills] = useState({ 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0 });
+  const [billCount, setBillCount] = useState({ 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0 });
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -17,10 +17,10 @@ export default function DualChipCounter() {
       }
     } catch (error) {
       console.error("Error cargando historial:", error);
-      setHistory([]); // Asegura que history tenga un valor válido en caso de error
+      setHistory([]);
     }
   }, []);
-
+  
   useEffect(() => {
     try {
       localStorage.setItem("chipHistory", JSON.stringify(history));
@@ -29,15 +29,18 @@ export default function DualChipCounter() {
     }
   }, [history]);
 
-  const handleChange = (value, chip, type) => {
+  const handleChipChange = (value, chip, type) => {
     const sanitizedValue = value === "" ? 0 : Math.max(0, Number(value));
     if (type === "dollar") {
       setDollarChips({ ...dollarChips, [chip]: sanitizedValue });
-    } else if (type === "bolivarChip") {
-      setBolivarChips({ ...bolivarChips, [chip]: sanitizedValue });
     } else {
-      setBolivarBills({ ...bolivarBills, [chip]: sanitizedValue });
+      setBolivarChips({ ...bolivarChips, [chip]: sanitizedValue });
     }
+  };
+
+  const handleBillChange = (value, bill) => {
+    const sanitizedValue = value === "" ? 0 : Math.max(0, Number(value));
+    setBillCount({ ...billCount, [bill]: sanitizedValue });
   };
 
   const calculateTotal = (chips) => {
@@ -58,11 +61,11 @@ export default function DualChipCounter() {
     const newEntry = {
       dollarChips: formatChips(dollarChips),
       bolivarChips: formatChips(bolivarChips),
-      bolivarBills: formatBills(bolivarBills),
+      billCount: formatBills(billCount),
       totalDollars: calculateTotal(dollarChips),
-      totalBolivarsChips: calculateTotal(bolivarChips),
-      totalBolivarsBills: calculateBillTotal(bolivarBills),
-      totalCombined: calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(bolivarBills),
+      totalBolivars: calculateTotal(bolivarChips),
+      totalBills: calculateBillTotal(billCount),
+      totalCombined: calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(billCount),
       date: new Date().toLocaleString()
     };
     setHistory((prevHistory) => [...prevHistory, newEntry]);
@@ -71,17 +74,12 @@ export default function DualChipCounter() {
   const reset = () => {
     setDollarChips({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
     setBolivarChips({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
-    setBolivarBills({ 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0 });
+    setBillCount({ 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0 });
   };
 
-  const billColors = {
-    5: "#e6dfcd",
-    10: "#e5e2f3",
-    20: "#f4e2be",
-    50: "#beccb3",
-    100: "#d5b6c6",
-    200: "#f2e4ca",
-    500: "#e7ead9"
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem("chipHistory");
   };
 
   return (
@@ -89,8 +87,9 @@ export default function DualChipCounter() {
       <div className="card bg-dark text-white shadow-lg p-4">
         <h2 className="text-center text-warning mb-4">Contador de Fichas y Billetes</h2>
 
+        {/* Dollar and Bolivar Chips */}
         {[{ label: "Dólares 💵", chips: dollarChips, type: "dollar", totalColor: "text-success" },
-          { label: "Bolívares 💴", chips: bolivarChips, type: "bolivarChip", totalColor: "text-primary" }].map(({ label, chips, type, totalColor }) => (
+          { label: "Bolívares 💴", chips: bolivarChips, type: "bolivar", totalColor: "text-primary" }].map(({ label, chips, type, totalColor }) => (
           <div key={type}>
             <h3 className={totalColor}>{label}</h3>
             {chipValues.map((chip) => (
@@ -101,9 +100,9 @@ export default function DualChipCounter() {
                     type="number"
                     className="form-control text-center"
                     value={chips[chip]}
-                    onChange={(e) => handleChange(e.target.value, chip, type)}
-                    onWheel={(e) => e.target.blur()} // Desactiva el cambio por scroll
-                    onFocus={(e) => e.target.select()} // Selecciona el valor al enfocar
+                    onChange={(e) => handleChipChange(e.target.value, chip, type)}
+                    onWheel={(e) => e.target.blur()} // Disable scroll changes
+                    onFocus={(e) => e.target.select()} // Select input value on focus
                   />
                 </div>
                 <div className="col-sm-4 text-black fw-bold">
@@ -115,34 +114,34 @@ export default function DualChipCounter() {
           </div>
         ))}
 
-
-        {/* Sección de Billetes */}
-        <div className="mt-4">
-          <h3 className="text-warning">Contador de Billetes de Bolívares 💴</h3>
-          {billValues.map((bill) => (
-            <div key={bill} className="row align-items-center mb-3 p-2 border rounded" style={{ backgroundColor: billColors[bill] }}>
-              <label className="col-sm-4 col-form-label fw-bold">Billetes de {bill}:</label>
-              <div className="col-sm-4">
-                <input
-                  type="number"
-                  className="form-control text-center"
-                  value={bolivarBills[bill]}
-                  onChange={(e) => handleChange(e.target.value, bill, "bolivarBill")}
-                  onWheel={(e) => e.target.blur()} // Desactiva el cambio por scroll
-                  onFocus={(e) => e.target.select()} // Selecciona el valor al enfocar
-                />
-              </div>
-              <div className="col-sm-4 text-black fw-bold">
-                Total: {bolivarBills[bill] * bill}
-              </div>
+        {/* Bill Counter */}
+        <h3 className="text-warning">Contador de Billetes</h3>
+        {billValues.map((bill, index) => (
+          <div key={bill} className="row align-items-center mb-3 p-2 border rounded" style={{ backgroundColor: `${index === 0 ? "#e7ead9" : index === 1 ? "#f2e4ca" : index === 2 ? "#d5b6c6" : index === 3 ? "#beccb3" : index === 4 ? "#f4e2be" : index === 5 ? "#e5e2f3" : "#e6dfcd"}` }}>
+            <label className="col-sm-4 col-form-label fw-bold">Billetes de {bill}:</label>
+            <div className="col-sm-4">
+              <input
+                type="number"
+                className="form-control text-center"
+                value={billCount[bill]}
+                onChange={(e) => handleBillChange(e.target.value, bill)}
+                onWheel={(e) => e.target.blur()} // Disable scroll changes
+                onFocus={(e) => e.target.select()} // Select input value on focus
+              />
             </div>
-          ))}
-          <h4 className="text-primary text-center fw-bold">Total Billetes: {calculateBillTotal(bolivarBills)}</h4>
-        </div>
-        <h3 className="text-warning text-center fw-bold mt-3">Total General: {calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(bolivarBills)}</h3>
+            <div className="col-sm-4 text-black fw-bold">
+              Total: {billCount[bill] * bill}
+            </div>
+          </div>
+        ))}
+        <h4 className="text-warning text-center fw-bold">Total de Billetes: {calculateBillTotal(billCount)}</h4>
+
+        <h3 className="text-warning text-center fw-bold mt-3">Total General: {calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(billCount)}</h3>
+
         <div className="d-flex justify-content-center gap-3">
           <button className="btn btn-success px-4" onClick={saveToHistory}>Guardar</button>
           <button className="btn btn-danger px-4" onClick={reset}>Reiniciar</button>
+          <button className="btn btn-warning px-4" onClick={clearHistory}>Borrar Historial</button>
         </div>
 
         <div className="mt-4">
@@ -155,8 +154,8 @@ export default function DualChipCounter() {
                 <div key={index} className="list-group-item list-group-item-dark d-flex flex-column">
                   <span>{entry.date}</span>
                   <span>Dólares: {entry.dollarChips} (Total: {entry.totalDollars})</span>
-                  <span>Bolívares (Fichas): {entry.bolivarChips} (Total: {entry.totalBolivarsChips})</span>
-                  <span>Bolívares (Billetes): {entry.bolivarBills} (Total: {entry.totalBolivarsBills})</span>
+                  <span>Bolívares: {entry.bolivarChips} (Total: {entry.totalBolivars})</span>
+                  <span>Billetes: {entry.billCount} (Total: {entry.totalBills})</span>
                   <span className="fw-bold">Total General: {entry.totalCombined}</span>
                 </div>
               ))
