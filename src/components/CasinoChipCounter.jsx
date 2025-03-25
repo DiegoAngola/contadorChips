@@ -1,10 +1,33 @@
-import { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css"; // Asegurar que Bootstrap está cargado
+import { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function CasinoChipCounter() {
   const chipValues = [100, 50, 25, 10, 5, 1];
   const [chips, setChips] = useState({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
   const [history, setHistory] = useState([]);
+
+  // Cargar historial desde localStorage al iniciar
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem("chipHistory");
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error("Error cargando historial:", error);
+    }
+  }, []);
+
+  // Guardar historial en localStorage cada vez que cambie
+  useEffect(() => {
+    try {
+      if (history.length > 0) {
+        localStorage.setItem("chipHistory", JSON.stringify(history));
+      }
+    } catch (error) {
+      console.error("Error guardando historial:", error);
+    }
+  }, [history]);
 
   const handleChange = (value, chip) => {
     setChips({ ...chips, [chip]: Number(value) || 0 });
@@ -15,7 +38,12 @@ export default function CasinoChipCounter() {
   };
 
   const saveToHistory = () => {
-    setHistory([...history, { ...chips, total: calculateTotal() }]);
+    const newEntry = {
+      ...chips,
+      total: calculateTotal(),
+      date: new Date().toLocaleString()
+    };
+    setHistory((prevHistory) => [...prevHistory, newEntry]);
   };
 
   const reset = () => {
@@ -70,7 +98,7 @@ export default function CasinoChipCounter() {
               <p className="text-muted text-center">No hay registros aún.</p>
             ) : (
               history.map((entry, index) => (
-                <div key={index} className="list-group-item list-group-item-dark d-flex justify-content-between">
+                <div key={index} className="list-group-item list-group-item-dark d-flex flex-column">
                   <span>
                     {chipValues
                       .filter((chip) => entry[chip] > 0)
@@ -78,6 +106,7 @@ export default function CasinoChipCounter() {
                       .join(" | ")}
                   </span>
                   <strong className="text-success">Total: {entry.total}</strong>
+                  <small className="text-muted">📅 {entry.date}</small>
                 </div>
               ))
             )}
