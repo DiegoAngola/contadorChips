@@ -8,6 +8,8 @@ export default function DualChipCounter() {
   const [bolivarChips, setBolivarChips] = useState({ 100: 0, 50: 0, 25: 0, 10: 0, 5: 0, 1: 0 });
   const [billCount, setBillCount] = useState({ 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0 });
   const [history, setHistory] = useState([]);
+  const [exchangeRate, setExchangeRate] = useState(1);
+
 
   useEffect(() => {
     try {
@@ -65,8 +67,9 @@ export default function DualChipCounter() {
       totalDollars: calculateTotal(dollarChips),
       totalBolivars: calculateTotal(bolivarChips),
       totalBills: calculateBillTotal(billCount),
-      totalCombined: calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(billCount),
-      date: new Date().toLocaleString()
+      totalCombined: calculateTotal(dollarChips) + calculateTotal(bolivarChips) + (calculateBillTotal(billCount) / exchangeRate),
+      date: new Date().toLocaleString(),
+      exchangeRate: exchangeRate, // Agregar la tasa al historial
     };
     setHistory((prevHistory) => [...prevHistory, newEntry]);
   };
@@ -88,8 +91,8 @@ export default function DualChipCounter() {
         <h2 className="text-center text-warning mb-4">Contador de Fichas y Billetes</h2>
 
         {/* Dollar and Bolivar Chips */}
-        {[{ label: "Dólares 💵", chips: dollarChips, type: "dollar", totalColor: "text-success" },
-          { label: "Bolívares 💴", chips: bolivarChips, type: "bolivar", totalColor: "text-primary" }].map(({ label, chips, type, totalColor }) => (
+        {[{ label: "F Dólares 💵", chips: dollarChips, type: "dollar", totalColor: "text-success" },
+          { label: "F Bolívares 💴", chips: bolivarChips, type: "bolivar", totalColor: "text-primary" }].map(({ label, chips, type, totalColor }) => (
           <div key={type}>
             <h3 className={totalColor}>{label}</h3>
             {chipValues.map((chip) => (
@@ -115,7 +118,7 @@ export default function DualChipCounter() {
         ))}
 
         {/* Bill Counter */}
-        <h3 className="text-warning">Contador de Billetes</h3>
+        <h3 className="text-warning">Contador de Billetes BD</h3>
         {billValues.map((bill, index) => (
           <div key={bill} className="row align-items-center mb-3 p-2 border rounded" style={{ backgroundColor: `${index === 0 ? "#e7ead9" : index === 1 ? "#f2e4ca" : index === 2 ? "#d5b6c6" : index === 3 ? "#beccb3" : index === 4 ? "#f4e2be" : index === 5 ? "#e5e2f3" : "#e6dfcd"}` }}>
             <label className="col-sm-4 col-form-label fw-bold">Billetes de {bill}:</label>
@@ -134,9 +137,23 @@ export default function DualChipCounter() {
             </div>
           </div>
         ))}
+        <div className="mb-3">
+          <label className="form-label fw-bold text-warning">Tasa del día:</label>
+          <input
+            type="number"
+            className="form-control text-center"
+            value={exchangeRate}
+            onChange={(e) => setExchangeRate(Number(e.target.value) || 1)}
+            onWheel={(e) => e.target.blur()} // Evita cambios con el scroll
+            onFocus={(e) => e.target.select()} // Selecciona el valor al hacer clic
+          />
+        </div>
         <h4 className="text-warning text-center fw-bold">Total de Billetes: {calculateBillTotal(billCount)}</h4>
 
-        <h3 className="text-warning text-center fw-bold mt-3">Total General: {calculateTotal(dollarChips) + calculateTotal(bolivarChips) + calculateBillTotal(billCount)}</h3>
+        <h3 className="text-warning text-center fw-bold mt-3">
+          Total General: {(calculateTotal(dollarChips) + calculateTotal(bolivarChips) + (calculateBillTotal(billCount) / exchangeRate)).toFixed(2)}
+        </h3>
+
 
         <div className="d-flex justify-content-center gap-3">
           <button className="btn btn-success px-4" onClick={saveToHistory}>Guardar</button>
@@ -153,10 +170,12 @@ export default function DualChipCounter() {
               history.map((entry, index) => (
                 <div key={index} className="list-group-item list-group-item-dark d-flex flex-column">
                   <span>{entry.date}</span>
-                  <span>Dólares: {entry.dollarChips} (Total: {entry.totalDollars})</span>
-                  <span>Bolívares: {entry.bolivarChips} (Total: {entry.totalBolivars})</span>
-                  <span>Billetes: {entry.billCount} (Total: {entry.totalBills})</span>
-                  <span className="fw-bold">Total General: {entry.totalCombined}</span>
+                  <span>F Dólares: {entry.dollarChips} (Total: {entry.totalDollars})</span>
+                  <span>F Bolívares: {entry.bolivarChips} (Total: {entry.totalBolivars})</span>
+                  <span>Billetes BD: {entry.billCount} (Total: {entry.totalBills})</span>
+                  <span className="fw-bold">Tasa del día: {entry.exchangeRate}</span> {/* Mostrar la tasa */}
+                  <span className="fw-bold">Total en dólares (billetes): {(entry.totalBills / entry.exchangeRate).toFixed(2)}</span> {/* Mostrar el total en dólares */}
+                  <span className="fw-bold">Total General: {entry.totalCombined.toFixed(2)}</span>
                 </div>
               ))
             )}
