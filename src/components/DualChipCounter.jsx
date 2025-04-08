@@ -29,10 +29,10 @@ export default function DualChipCounter() {
     return Object.keys(bills).reduce((acc, bill) => acc + bills[bill] * bill, 0);
   };
 
-  // Función para calcular el total en bolívares convertido a dólares
+  // Función para calcular el total de billetes en bolívares convertido a dólares
   const calculateBolivarTotalInDollars = () => {
-    const totalBolivars = calculateTotal(bolivarChips) + calculateBillTotal(billCount);
-    return conversionRate > 0 ? (totalBolivars / conversionRate).toFixed(2) : 0;
+    const totalBolivarBills = calculateBillTotal(billCount); // Total de billetes en bolívares
+    return conversionRate > 0 ? (totalBolivarBills / conversionRate).toFixed(2) : 0;
   };
 
   // Función para calcular el total general
@@ -42,7 +42,12 @@ export default function DualChipCounter() {
     const totalBolivarsConverted = calculateBolivarTotalInDollars(); // Total de billetes en bolívares convertido a dólares
     const totalDollarBills = calculateBillTotal(dollarBills); // Total de billetes en dólares
 
-    return totalDollars + totalBolivars + parseFloat(totalBolivarsConverted) + totalDollarBills;
+    return (
+      totalDollars + // Total de fichas en dólares
+      totalBolivars + // Total de fichas en bolívares
+      parseFloat(totalBolivarsConverted) + // Total de billetes en bolívares convertido a dólares
+      totalDollarBills // Total de billetes en dólares
+    );
   };
 
   // Función para guardar el historial
