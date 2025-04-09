@@ -39,7 +39,7 @@ const BillCounter = ({ label, bills, handleBillChange, calculateBillTotal, billV
         </div>
       </div>
     ))}
-    <h4 className={`${totalColor} text-center fw-bold`}>Total: {calculateBillTotal(bills)}</h4>
+    <h4 className={`${totalColor} text-center fw-bold`}>Total: {parseFloat(calculateBillTotal(bills)).toFixed(2)}</h4>
   </div>
 );
 

@@ -13,7 +13,7 @@ const HistoryList = ({ history }) => (
             <span>Billetes Bolívares: {entry.billCount} (Total: {entry.totalBolivarBills})</span>
             <span>Total Bolívares Convertido a Dólares: {entry.totalBolivarsConverted}</span>
             <span>Billetes Dólares: {entry.dollarBills} (Total: {entry.totalDollarBills})</span>
-            <span className="fw-bold">Total General: {entry.totalCombined}</span>
+            <span className="fw-bold">Total General: {parseFloat(entry.totalCombined).toFixed(2)}</span>
           </div>
         ))
       )}

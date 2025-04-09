@@ -190,7 +190,7 @@ export default function DualChipCounter() {
         />
 
         <h3 className="text-warning text-center fw-bold mt-3">
-          Total General: {calculateTotalGeneral()}
+            Total General: {parseFloat(calculateTotalGeneral()).toFixed(2)}
         </h3>
 
         <div className="d-flex justify-content-center gap-3">
